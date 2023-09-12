@@ -123,7 +123,7 @@ export default function Home() {
         <meta property="twitter:image" content="/meta-image.jpg" />
       </Head>
 
-      <ApplicationLayout>
+      <ApplicationLayout customHeader="Your Dashboard">
         {/* Earnings Stats Start */}
         <div>
           <dl className="mx-auto grid grid-cols-1 gap-px bg-zinc-900/5 sm:grid-cols-2 lg:grid-cols-4">
