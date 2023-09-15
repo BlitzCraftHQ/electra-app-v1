@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   GOVERNOR_CONTRACT_ABI,
   GOVERNOR_CONTRACT_ADDRESS,
@@ -23,6 +24,7 @@ let statusList = [
 ];
 
 export default function ProposalList({ proposal, proposalId }: any) {
+  const [renderMarkdown, setRenderMarkdown] = useState<any>();
   const {
     data: stateData,
     isError: isErrorState,
@@ -57,6 +59,14 @@ export default function ProposalList({ proposal, proposalId }: any) {
     }
   }
 
+  useEffect(() => {
+    try {
+      return setRenderMarkdown(JSON.parse(proposal.description).title);
+    } catch {
+      return setRenderMarkdown(proposal.description);
+    }
+  }, [proposal.description, renderMarkdown]);
+
   return (
     <div>
       <li key={proposalId} className="space-x-6">
@@ -68,13 +78,16 @@ export default function ProposalList({ proposal, proposalId }: any) {
             <div className="h-3 w-3">
               {statusList[stateData] === "Active" && (
                 <div className="relative flex items-center h-3 w-3 bg-primary-600 rounded-full">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-600 opacity-75" />
                 </div>
               )}
             </div>
             <div className="min-w-0 flex-auto">
               <p className="text-sm font-medium leading-6 text-zinc-900 line-clamp-2 text-ellipsis">
-                {proposal.description}
+                {/* {JSON.parse(proposal.description).title} */}
+                {renderMarkdown}
+                {/* {JSON.parse(proposal.description).title &&
+                  JSON.parse(proposal.description).title} */}
               </p>
               <div className="mt-3 flex items-center gap-x-5">
                 <div className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-zinc-900 ring-1 ring-inset ring-zinc-200 capitalize">

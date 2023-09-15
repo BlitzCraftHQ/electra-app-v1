@@ -1,6 +1,7 @@
 import Head from "next/head";
 import ApplicationLayout from "@/components/Utilities/ApplicationLayout";
 import { useState, useEffect } from "react";
+import { ReactMarkdown } from "react-markdown/lib/react-markdown";
 import {
   useAccount,
   useContractReads,
@@ -130,7 +131,7 @@ export default function Proposal() {
         <meta property="twitter:image" content="/meta-image.jpg" />
       </Head>
 
-      <ApplicationLayout customHeader={proposalData.args[8]}>
+      <ApplicationLayout customHeader={JSON.parse(proposalData.args[8]).title}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5">
           <div className="rounded-md bg-white shadow py-6">
             {/* Votes Progress Bar Start */}
@@ -189,9 +190,9 @@ export default function Proposal() {
               </div>
             </div>
             {/* Addresses End */}
-            <div className="mt-5 pt-5 border-t border-gray-200 font-black text-gray-600 text-md text-center">
+            {/* <div className="mt-5 pt-5 border-t border-gray-200 font-black text-gray-600 text-md text-center">
               View All
-            </div>
+            </div> */}
           </div>
 
           <div className="rounded-md bg-white shadow py-6">
@@ -253,9 +254,9 @@ export default function Proposal() {
               </div>
             </div>
             {/* Addresses End */}
-            <div className="mt-5 pt-5 border-t border-gray-200 font-black text-gray-600 text-md text-center">
+            {/* <div className="mt-5 pt-5 border-t border-gray-200 font-black text-gray-600 text-md text-center">
               View All
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -267,10 +268,10 @@ export default function Proposal() {
             <h4>You have voted!</h4>
           </div>
         ) : (
-          <div className="flex space-x-4 my-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 space-x-4 my-4">
             <button
               type="button"
-              className="flex-1 rounded-md bg-green-800 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              className="rounded-md bg-green-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
               value={1}
               onClick={() =>
                 write({
@@ -283,7 +284,7 @@ export default function Proposal() {
             </button>
             <button
               type="button"
-              className="flex-1 rounded-md bg-red-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              className="rounded-md bg-red-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
               value={0}
               onClick={() =>
                 write({
@@ -296,7 +297,7 @@ export default function Proposal() {
             </button>
             <button
               type="button"
-              className="flex-1 rounded-md bg-gray-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              className="rounded-md bg-blue-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
               value={2}
               onClick={() =>
                 write({
@@ -309,6 +310,13 @@ export default function Proposal() {
             </button>
           </div>
         )}
+
+        <div className="rounded-md bg-white shadow px-5 sm:px-6 py-6">
+          <div className="font-black text-xl">Details</div>
+          <ReactMarkdown className="mt-5">
+            {JSON.parse(proposalData.args[8]).description}
+          </ReactMarkdown>
+        </div>
       </ApplicationLayout>
     </>
   );

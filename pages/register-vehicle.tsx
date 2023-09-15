@@ -176,7 +176,7 @@ export default function RegisterVehicle() {
                 onChange={handleInput}
                 value={inputs.make}
                 className="block w-full border-0 p-0 text-zinc-900 placeholder:text-zinc-400 focus:ring-0 sm:text-sm sm:leading-6"
-                placeholder="Lamborghini"
+                placeholder="Lucid"
               />
             </div>
 
@@ -194,7 +194,7 @@ export default function RegisterVehicle() {
                 onChange={handleInput}
                 value={inputs.model}
                 className="block w-full border-0 p-0 text-zinc-900 placeholder:text-zinc-400 focus:ring-0 sm:text-sm sm:leading-6"
-                placeholder="Aventador"
+                placeholder="Air Touring"
               />
             </div>
 
@@ -222,7 +222,7 @@ export default function RegisterVehicle() {
                   htmlFor="idealChargingWattage"
                   className="block text-xs font-medium text-zinc-900"
                 >
-                  Ideal Charging WAttage
+                  Ideal Charging Wattage
                 </label>
                 <input
                   type="text"
@@ -231,7 +231,7 @@ export default function RegisterVehicle() {
                   onChange={handleInput}
                   value={inputs.idealChargingWattage}
                   className="block w-full border-0 p-0 text-zinc-900 placeholder:text-zinc-400 focus:ring-0 sm:text-sm sm:leading-6"
-                  placeholder="100"
+                  placeholder="200"
                 />
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pt-4 pr-3">
                   <span

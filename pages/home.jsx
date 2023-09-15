@@ -1,114 +1,115 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Head from "next/head";
+import Link from "next/link";
+import Image from "next/image";
+import { useAccount, useContractRead, useContractWrite } from "wagmi";
 import {
-  BanknotesIcon,
-  Battery100Icon,
-  CreditCardIcon,
-  CursorArrowRippleIcon,
-} from "@heroicons/react/24/outline";
-import { useAccount } from "wagmi";
+  NETSPAN_TOKEN_ABI,
+  NETSPAN_TOKEN_ADDRESS,
+} from "@/utilities/contractDetails";
+import { XMarkIcon } from "@heroicons/react/20/solid";
 import ApplicationLayout from "@/components/Utilities/ApplicationLayout";
 
-import {
-  GeolocateControl,
-  Map,
-  Marker,
-  NavigationControl,
-  useMap,
-} from "react-map-gl";
+import { GeolocateControl, Map, Marker, NavigationControl } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-const stats = [
+const markersData = [
   {
-    name: "Revenue",
-    value: "$405,091.00",
-    change: "+4.75%",
-    changeType: "positive",
+    firstName: "Daniel",
+    lastName: "Mark",
+    address: "Kilpauk, Chennai, Chennai, Tamil Nadu, India",
+    latitude: 13.083215,
+    longitude: 80.237986,
+    chargerCapacity: "120",
+    title:
+      "New Charging Station At Kilpauk, Chennai, Chennai, Tamil Nadu, India",
   },
   {
-    name: "Overdue invoices",
-    value: "$12,787.00",
-    change: "+54.02%",
-    changeType: "negative",
+    firstName: "Daniel",
+    lastName: "Mark",
+    address:
+      "Aspiran Garden Colony, Kilpauk, Chennai, Chennai, Tamil Nadu, India",
+    latitude: 13.085186,
+    longitude: 80.237952,
+    chargerCapacity: "150",
+    title:
+      "New Charging Station At Aspiran Garden Colony, Kilpauk, Chennai, Chennai, Tamil Nadu, India",
   },
   {
-    name: "Outstanding invoices",
-    value: "$245,988.00",
-    change: "-1.39%",
-    changeType: "positive",
+    firstName: "Fabian",
+    lastName: "Ferno",
+    address:
+      "Mandapam Road, Aspiran Garden Colony, 600010, Kilpauk, Chennai, Chennai, Tamil Nadu, India",
+    latitude: 13.0845332,
+    longitude: 80.2358215,
+    chargerCapacity: "200",
+    title:
+      "New Charging Station At Mandapam Road, Aspiran Garden Colony, 600010, Kilpauk, Chennai, Chennai, Tamil Nadu, India",
   },
   {
-    name: "Expenses",
-    value: "$30,156.00",
-    change: "+10.18%",
-    changeType: "negative",
-  },
-];
-const items = [
-  {
-    title: "Register a vehicle",
-    description: "Another to-do system you'll try but eventually give up on.",
-    icon: CursorArrowRippleIcon,
-    background: "bg-pink-500",
-  },
-  {
-    title: "Register a charging station",
-    description: "Stay on top of your deadlines, or don't — it's up to you.",
-    icon: Battery100Icon,
-    background: "bg-indigo-500",
-  },
-  {
-    title: "Top up charging points",
-    description: "Great for mood boards and inspiration.",
-    icon: CreditCardIcon,
-    background: "bg-blue-500",
-  },
-  {
-    title: "Withdraw earnings",
-    description: "Track tasks in different stages of your project.",
-    icon: BanknotesIcon,
-    background: "bg-purple-500",
+    firstName: "Richard",
+    lastName: "Hendricks",
+    address:
+      "Central Street, Kilpauk Garden Colony, 600010, Kilpauk, Chennai, Chennai, Tamil Nadu, India",
+    latitude: 13.0849401,
+    longitude: 80.2339489,
+    chargerCapacity: "200",
+    title:
+      "New Charging Station At Central Street, Kilpauk Garden Colony, 600010, Kilpauk, Chennai, Chennai, Tamil Nadu, India",
   },
 ];
-
-function classNames(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
 
 export default function Home() {
-  const { address: walletAddress } = useAccount();
+  const { address } = useAccount();
   const [location, setLocation] = useState([]);
-  const [address, setAddress] = useState(null);
+  const [addressOnMap, setAddressOnMap] = useState(null);
+  const [markers, setMarkers] = useState([]);
+  const [showPopUp, setShowPopUp] = useState(false);
+  const [PopUpData, setPopUpData] = useState({});
+  const [walletAddress, setWalletAddress] = useState(address);
+  const { data, isLoading, isSuccess, write } = useContractWrite({
+    address: NETSPAN_TOKEN_ADDRESS,
+    abi: NETSPAN_TOKEN_ABI.abi,
+    functionName: "delegate",
+    args: [walletAddress],
+  });
 
-  function handleLocationClick() {
+  const { data: VotingTokens } = useContractRead({
+    address: NETSPAN_TOKEN_ADDRESS,
+    abi: NETSPAN_TOKEN_ABI.abi,
+    functionName: "getVotes",
+    args: ["0xd69a4dd0dfb261a8EF37F45925491C077EF1dBFb"],
+  });
+
+  useEffect(() => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(success, error);
+      navigator.geolocation.getCurrentPosition(retrieveMarkers, error);
     } else {
       console.log("Geolocation not supported");
     }
-  }
+  }, []);
 
-  function success(position) {
+  function retrieveMarkers(position) {
     const latitude = position.coords.latitude;
     const longitude = position.coords.longitude;
     setLocation([latitude, longitude]);
     console.log(`Latitude: ${latitude}, Longitude: ${longitude}`);
 
-    // Make API call to OpenWeatherMap
+    // Make API call to MapBox
     fetch(
       `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_API_KEY}`
     )
       .then((response) => response.json())
       .then((data) => {
-        // setAddress((data) => {
-        //   data.
-        // });
-
         console.log(data);
         var addressTemp = data.features.filter((item) =>
           item.place_type.includes("address")
         )[0];
-        setAddress(addressTemp.place_name);
+        setAddressOnMap(addressTemp.place_name);
+      })
+      .then(() => {
+        // Get markers
+        setMarkers(markersData);
       })
       .catch((error) => console.log(error));
   }
@@ -180,61 +181,84 @@ export default function Home() {
       </Head>
 
       <ApplicationLayout customHeader="Your Dashboard">
-        {/* Earnings Stats Start */}
-        <div className="rounded-md bg-white px-5 py-6 shadow sm:px-6">
-          <dl className="mx-auto grid grid-cols-1 gap-px bg-zinc-900/5 sm:grid-cols-2 lg:grid-cols-4">
-            {stats.map((stat) => (
-              <div
-                key={stat.name}
-                className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 bg-white px-4 py-10 sm:px-6 xl:px-8"
-              >
-                <dt className="text-sm font-medium leading-6 text-zinc-500">
-                  {stat.name}
-                </dt>
-                <dd
-                  className={classNames(
-                    stat.changeType === "negative"
-                      ? "text-rose-600"
-                      : "text-zinc-700",
-                    "text-xs font-medium"
-                  )}
-                >
-                  {stat.change}
-                </dd>
-                <dd className="w-full flex-none text-3xl font-bold leading-10 tracking-tight text-zinc-900">
-                  {stat.value}
-                </dd>
+        {/* Votes Delegation Start */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 rounded-md bg-white px-5 py-6 shadow sm:px-6">
+          <div>
+            <div className="font-black text-zinc-900 text-2xl">
+              Voting Power
+            </div>
+            <div className="mt-1 font-medium text-gray-500 text-sm">
+              Total Votes you posses
+            </div>
+            <div className="mt-5 font-black text-5xl text-gray-900">
+              {VotingTokens ? VotingTokens.toString() : "0"}{" "}
+              <span className="text-base text-gray-500 font-medium">votes</span>
+            </div>
+          </div>
+          <div>
+            <div className="-ml-4 -mt-4 flex flex-wrap items-center justify-between sm:flex-nowrap">
+              <div className="ml-4 mt-4">
+                <h3 className="text-base font-semibold leading-6 text-gray-900">
+                  Delegate voting power
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Your delegate&apos;s performance impacts your onchain
+                  reputation. Delegate to someone who is aligned with your goals
+                  and actively participates.
+                </p>
               </div>
-            ))}
-          </dl>
+            </div>
+
+            <div className="mt-4 flex-shrink-0">
+              <div className="mt-2">
+                <input
+                  type="text"
+                  name="address"
+                  id="address"
+                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
+                  placeholder="0x00000000000000000000000000000000"
+                  defaultValue={addressOnMap}
+                  onChange={(e) => setWalletAddress(e.target.value)}
+                  aria-describedby="address"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => write()}
+                className="mt-4 relative inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+              >
+                Delegate Votes
+              </button>
+            </div>
+          </div>
         </div>
-        {/* Earnings Stats End */}
+        {/* Votes Delegation End */}
         {/* Map Start */}
         <div className="mt-8 rounded-md bg-white px-5 py-6 shadow sm:px-6">
           <div className="font-semibold text-2xl text-gray-900">
             EV Charging Stations Near Your Location
           </div>
           <div>
-            {!location ? (
-              <button onClick={handleLocationClick}>Get Location</button>
-            ) : null}
-            {location ? <p>Loading weather data...</p> : null}
-            {location ? (
-              <div>
-                <p>Location: {address}</p>
+            {addressOnMap === null ? (
+              <div className="mt-2 font-medium text-gray-500 text-sm">
+                Retrieving your current location...
               </div>
-            ) : null}
+            ) : (
+              <div className="mt-2 font-medium text-gray-500 text-sm">
+                {addressOnMap}
+              </div>
+            )}
           </div>
-          <div className="col-span-2 overflow-hidden rounded-md">
-            {location && (
+          <div className="mt-5 col-span-2 overflow-hidden rounded-md">
+            {markers.length > 0 && (
               <Map
-                mapLib={import("mapbox-gl")}
+                // mapLib={import("mapbox-gl")}
                 mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_API_KEY}
                 attributionControl={false}
                 initialViewState={{
-                  longitude: location[1],
                   latitude: location[0],
-                  zoom: 10,
+                  longitude: location[1],
+                  zoom: 15,
                 }}
                 style={{ height: 500 }}
                 // mapStyle="mapbox://styles/mapbox/navigation-day-v1"
@@ -243,69 +267,69 @@ export default function Home() {
               >
                 <GeolocateControl />
                 <NavigationControl />
-                {/* {showMarker && (
+                {markers.map((marker) => (
                   <Marker
-                    longitude={center[0]}
-                    latitude={center[1]}
+                    key={`${marker.latitude}-${marker.longitude}`}
+                    longitude={marker.longitude}
+                    latitude={marker.latitude}
                     anchor="bottom"
-                    draggable={true}
-                    onClose={() => setShowPopup(false)}
+                    onClick={() => {
+                      setPopUpData(marker);
+                      setShowPopUp(true);
+                    }}
                   />
-                )} */}
+                ))}
+                {showPopUp && (
+                  <div className="absolute top-3 left-3 bg-white px-5 py-3 rounded-md shadow-lg border border-gray-100">
+                    <XMarkIcon
+                      className="h-6 w-6 text-gray-400 absolute top-3 right-3 cursor-pointer"
+                      aria-hidden="true"
+                      onClick={() => setShowPopUp(false)}
+                    />
+                    <div className="font-semibold text-gray-900 tracking-tight text-xl pr-8 max-w-lg">
+                      {PopUpData.address}
+                    </div>
+                    <div className="text-gray-500 text-sm">
+                      Owned by {PopUpData.firstName} {PopUpData.lastName}
+                    </div>
+
+                    <div className="mt-3 text-gray-500 text-sm">
+                      Latitude: {PopUpData.latitude}
+                    </div>
+                    <div className="mt-0 text-gray-500 text-sm">
+                      Longitude: {PopUpData.longitude}
+                    </div>
+
+                    <div className="mt-5 flex items-center gap-x-2 font-medium text-gray-500 text-lg">
+                      <Image
+                        src="/logos/logo.png"
+                        width={512}
+                        height={512}
+                        alt="Logo"
+                        className="h-6 w-6"
+                      />
+                      <span>
+                        {PopUpData.chargerCapacity} kW Charging Station
+                      </span>
+                    </div>
+
+                    <div className="mt-8 mb-5">
+                      <Link
+                        href={`https://www.google.com/maps/search/?api=1&query=${PopUpData.latitude}%2C${PopUpData.longitude}`}
+                        target="_blank"
+                        passHref={true}
+                        className="rounded-md bg-primary-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                      >
+                        Locate on Google Maps
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </Map>
             )}
           </div>
         </div>
         {/* Map End */}
-        {/* Menu Start */}
-        {/* <div className="px-5 lg:px-8">
-          <h2 className="pt-8 text-base font-semibold leading-6 text-zinc-900 border-t border-zinc-200">
-            {address && (
-              <>
-                Hello there {address.slice(0, 4)}...
-                {address.slice(address.length - 4)}!
-              </>
-            )}
-          </h2>
-          <p className="mt-1 text-sm text-zinc-500">
-            What would you like to do today?
-          </p>
-          <ul
-            role="list"
-            className="mt-6 grid grid-cols-1 gap-6 border-b border-t border-zinc-200 py-6 sm:grid-cols-2"
-          >
-            {items.map((item, itemIdx) => (
-              <li key={itemIdx} className="flow-root">
-                <div className="relative -m-2 flex items-center space-x-4 rounded-xl p-2 focus-within:ring-2 focus-within:ring-indigo-500 hover:bg-zinc-50">
-                  <div
-                    className={classNames(
-                      item.background,
-                      "flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg"
-                    )}
-                  >
-                    <item.icon
-                      className="h-6 w-6 text-white"
-                      aria-hidden="true"
-                    />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-zinc-900">
-                      <a href="#" className="focus:outline-none">
-                        <span className="absolute inset-0" aria-hidden="true" />
-                        <span>{item.title}</span>
-                        <span aria-hidden="true"> &rarr;</span>
-                      </a>
-                    </h3>
-                    <p className="mt-1 text-sm text-zinc-500">
-                      {item.description}
-                    </p>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div> */}
-        {/* Menu End */}
       </ApplicationLayout>
     </>
   );

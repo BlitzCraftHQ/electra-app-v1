@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Head from "next/head";
 import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import { useContractWrite } from "wagmi";
@@ -17,12 +17,15 @@ export default function RegisterCharger() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showFailed, setShowFailed] = useState(false);
   const [center, setCenter] = useState([]);
+  const [location, setLocation] = useState("");
   const address = useInput("");
 
   const [inputs, setInputs] = useState({
     firstName: "",
     lastName: "",
     address: "",
+    latitude: center[1],
+    longitude: center[0],
     chargerCapacity: "",
   });
 
@@ -34,33 +37,48 @@ export default function RegisterCharger() {
     }));
   };
 
-  const encodedCallData = encodeFunctionData({
-    abi: TCR_CONTRACT_ABI.abi,
-    functionName: "createEntry",
-    args: [
-      inputs.firstName,
-      inputs.lastName,
-      inputs.address,
-      // inputs.chargerCapacity,
-      // center[1],
-      // center[0],
-    ],
-  });
+  useEffect(() => {
+    setInputs((prev) => ({
+      ...prev,
+      address: location,
+    }));
+  }, [location]);
 
-  const { data, isLoading, isSuccess, write } = useContractWrite({
-    address: GOVERNOR_CONTRACT_ADDRESS,
-    abi: GOVERNOR_CONTRACT_ABI.abi,
-    functionName: "propose",
-    args: [
-      [TCR_CONTRACT_ADDRESS],
-      [0],
-      [encodedCallData],
-      JSON.stringify({
-        ...inputs,
-        title: `New Charging Station At ${inputs.address}`,
-      }),
-    ],
-  });
+  useEffect(() => {
+    setInputs((prev) => ({
+      ...prev,
+      latitude: center[1],
+      longitude: center[0],
+    }));
+  }, [center]);
+
+  // const encodedCallData = encodeFunctionData({
+  //   abi: TCR_CONTRACT_ABI.abi,
+  //   functionName: "createEntry",
+  //   args: [
+  //     inputs.firstName,
+  //     inputs.lastName,
+  //     inputs.address,
+  //     // inputs.chargerCapacity,
+  //     // center[1],
+  //     // center[0],
+  //   ],
+  // });
+
+  // const { data, isLoading, isSuccess, write } = useContractWrite({
+  //   address: GOVERNOR_CONTRACT_ADDRESS,
+  //   abi: GOVERNOR_CONTRACT_ABI.abi,
+  //   functionName: "propose",
+  //   args: [
+  //     [TCR_CONTRACT_ADDRESS],
+  //     [0],
+  //     [encodedCallData],
+  //     JSON.stringify({
+  //       ...inputs,
+  //       title: `New Charging Station At ${inputs.address}`,
+  //     }),
+  //   ],
+  // });
 
   // Submit form
   const handleSubmit = async (e) => {
@@ -69,7 +87,14 @@ export default function RegisterCharger() {
     setShowSuccess(false);
     setShowFailed(false);
 
-    write();
+    // write();
+
+    const stringifiedJSON = JSON.stringify({
+      ...inputs,
+      title: `New Charging Station At ${inputs.address}`,
+    });
+
+    console.log(stringifiedJSON);
 
     if (isSuccess) {
       setLoading(false);
@@ -191,72 +216,6 @@ export default function RegisterCharger() {
               </div>
             </div>
 
-            {/* <div className="col-span-2 rounded-md px-3 pb-1.5 pt-2.5 shadow-sm ring-1 ring-inset ring-zinc-300 focus-within:ring-2 focus-within:ring-primary-400">
-                <label
-                  htmlFor="address"
-                  className="block text-xs font-medium text-zinc-900"
-                >
-                  Address
-                </label>
-                <input
-                  {...address}
-                  className="block w-full border-0 p-0 text-zinc-900 placeholder:text-zinc-400 focus:ring-0 sm:text-sm sm:leading-6"
-                  placeholder="Type your address..."
-                />
-                <div className="mt-5 font-semibold text-xs text-gray-400">
-                  Addresses that match your search...
-                </div>
-                {address.suggestions?.length > 0 && (
-                  <div className="mt-2 block w-full border-0 p-0 text-zinc-900 placeholder:text-zinc-400 focus:ring-0 sm:text-sm sm:leading-6">
-                    {address.suggestions.map((suggestion, index) => {
-                      return (
-                        <div
-                          key={index}
-                          onClick={() => {
-                            address.setValue(suggestion.place_name);
-                            setCenter(suggestion.center);
-                            address.setSuggestions([]);
-                          }}
-                          className="px-2 py-2 hover:bg-primary-400 cursor-pointer rounded-sm"
-                        >
-                          {suggestion.place_name}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div> */}
-
-            {/* <div className="col-span-2 overflow-hidden rounded-md">
-                <Map
-                  // mapLib={import("mapbox-gl")}
-                  mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_API_KEY}
-                  attributionControl={false}
-                  initialViewState={{
-                    longitude: center[0],
-                    latitude: center[1],
-                    zoom: 3.5,
-                  }}
-                  style={{ height: 500 }}
-                  // mapStyle="mapbox://styles/mapbox/navigation-day-v1"
-                  mapStyle="mapbox://styles/mapbox/streets-v9"
-                  className="relative map-container"
-                >
-                  <GeolocateControl />
-                  <NavigateButton />
-                  <NavigationControl />
-                  {showMarker && (
-                    <Marker
-                      longitude={center[0]}
-                      latitude={center[1]}
-                      anchor="bottom"
-                      draggable={true}
-                      onClose={() => setShowPopup(false)}
-                    />
-                  )}
-                </Map>
-              </div> */}
-
             <div className="col-span-3 rounded-md px-3 pb-1.5 pt-2.5 shadow-sm ring-1 ring-inset ring-zinc-300 focus-within:ring-2 focus-within:ring-primary-400">
               <label
                 htmlFor="address"
@@ -282,6 +241,7 @@ export default function RegisterCharger() {
                           address.setValue(suggestion.place_name);
                           setCenter(suggestion.center);
                           address.setSuggestions([]);
+                          setLocation(suggestion.place_name);
                         }}
                         className="px-2 py-2 hover:bg-primary-400 cursor-pointer rounded-sm"
                       >
@@ -399,7 +359,7 @@ export default function RegisterCharger() {
                 disabled={Loading}
               >
                 {Loading ? (
-                  "Creating Topic"
+                  "Registering Charging Station..."
                 ) : (
                   <span className="flex justify-center gap-x-2">
                     Register <span aria-hidden="true">→</span>
