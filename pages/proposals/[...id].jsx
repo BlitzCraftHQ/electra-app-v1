@@ -3,6 +3,10 @@ import ApplicationLayout from "@/components/Utilities/ApplicationLayout";
 import { useState, useEffect } from "react";
 import { ReactMarkdown } from "react-markdown/lib/react-markdown";
 import {
+  QueueButton,
+  ExecuteButton,
+} from "@/components/Utilities/ProposalMethods";
+import {
   useAccount,
   useContractReads,
   useContractRead,
@@ -36,6 +40,13 @@ export default function Proposal() {
     address: GOVERNOR_CONTRACT_ADDRESS,
     abi: GOVERNOR_CONTRACT_ABI.abi,
     functionName: "castVote",
+  });
+
+  const { data: stateData, isSuccess: isStateSuccess } = useContractRead({
+    address: GOVERNOR_CONTRACT_ADDRESS,
+    abi: GOVERNOR_CONTRACT_ABI.abi,
+    functionName: "state",
+    args: [id],
   });
 
   useEffect(() => {
@@ -260,7 +271,7 @@ export default function Proposal() {
           </div>
         </div>
 
-        {voted ? (
+        {stateData == 1 && voted ? (
           <div
             className="container m-4 flex justify-center rounded-sm border-black shadow-md p-3"
             style={{ backgroundColor: "#e9c46a" }}
@@ -268,48 +279,55 @@ export default function Proposal() {
             <h4>You have voted!</h4>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 space-x-4 my-4">
-            <button
-              type="button"
-              className="rounded-md bg-green-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
-              value={1}
-              onClick={() =>
-                write({
-                  args: [id, 1],
-                  from: address,
-                })
-              }
-            >
-              For
-            </button>
-            <button
-              type="button"
-              className="rounded-md bg-red-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
-              value={0}
-              onClick={() =>
-                write({
-                  args: [id, 0],
-                  from: address,
-                })
-              }
-            >
-              Against
-            </button>
-            <button
-              type="button"
-              className="rounded-md bg-blue-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-              value={2}
-              onClick={() =>
-                write({
-                  args: [id, 2],
-                  from: address,
-                })
-              }
-            >
-              Abstain
-            </button>
-          </div>
+          stateData == 1 && (
+            <div className="flex space-x-4 my-4">
+              <button
+                type="button"
+                className="flex-1 rounded-md bg-green-800 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                value={1}
+                onClick={() =>
+                  write({
+                    args: [id, 1],
+                    from: address,
+                  })
+                }
+              >
+                For
+              </button>
+              <button
+                type="button"
+                className="flex-1 rounded-md bg-red-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                value={0}
+                onClick={() =>
+                  write({
+                    args: [id, 0],
+                    from: address,
+                  })
+                }
+              >
+                Against
+              </button>
+              <button
+                type="button"
+                className="flex-1 rounded-md bg-gray-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                value={2}
+                onClick={() =>
+                  write({
+                    args: [id, 2],
+                    from: address,
+                  })
+                }
+              >
+                Abstain
+              </button>
+            </div>
+          )
         )}
+
+        {/* Current: Success */}
+        {stateData === 4 && <QueueButton proposalData={proposalData} />}
+        {/* Current: Queue */}
+        {stateData === 5 && <ExecuteButton proposalData={proposalData} />}
 
         <div className="rounded-md bg-white shadow px-5 sm:px-6 py-6">
           <div className="font-black text-xl">Details</div>
