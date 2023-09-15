@@ -35,7 +35,7 @@ export default async function create(req: any, res: any) {
       },
       body: JSON.stringify({
         // the username to be displayed
-        username: "Electra Notifications",
+        username: "Netspan Notifications",
         // the avatar to be displayed
         avatar_url: "https://i.ibb.co/4t5vt7C/NEO-512-512.jpg",
 

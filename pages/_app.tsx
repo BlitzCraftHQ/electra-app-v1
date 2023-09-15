@@ -32,12 +32,33 @@ const AltheaEVM = {
   },
   testnet: false,
 };
+const MumbaiEVM = {
+  id: 80001,
+  name: "Mumbai",
+  network: "Mumbai Testnet",
+  iconUrl:
+    "https://cdn.dorahacks.io/static/files/188c028468557368d12717c46b1bd63e.jpg",
+  iconBackground: "#fff",
+  nativeCurrency: {
+    name: "MATIC",
+    symbol: "MATIC",
+    decimals: 18,
+  },
+  rpcUrls: {
+    public: { http: ["https://polygon-mumbai-bor.publicnode.com"] },
+    default: { http: ["https://polygon-mumbai-bor.publicnode.com"] },
+  },
+  blockExplorers: {
+    default: { name: "polygonscan", url: "https://mumbai.polygonscan.com" },
+  },
+  testnet: true,
+};
 
 export default function App({ Component, pageProps }: AppProps) {
   const [ready, setReady] = useState(false);
 
   const { publicClient, chains } = configureChains(
-    [AltheaEVM],
+    [AltheaEVM, MumbaiEVM],
     [publicProvider()]
   );
 

@@ -4,11 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import {
-  BanknotesIcon,
   Bars3Icon,
   Battery100Icon,
   BellIcon,
-  CreditCardIcon,
   CursorArrowRippleIcon,
   DocumentTextIcon,
   HomeIcon,
@@ -28,20 +26,15 @@ const navigation = [
     icon: DocumentTextIcon,
   },
   {
-    name: "Registration",
-    href: "/register",
+    name: "Register Vehicle",
+    href: "/register-vehicle",
     icon: CursorArrowRippleIcon,
   },
-  // {
-  //   name: "Register Vehicle",
-  //   href: "/register-vehicle",
-  //   icon: CursorArrowRippleIcon,
-  // },
-  // {
-  //   name: "Register Charging Station",
-  //   href: "/register-station",
-  //   icon: Battery100Icon,
-  // },
+  {
+    name: "Register Charger",
+    href: "/register-charger",
+    icon: Battery100Icon,
+  },
   {
     name: "Wallet",
     href: "/wallet",
@@ -79,9 +72,14 @@ function classNames(...classes: string[]) {
 interface Props {
   children?: ReactNode;
   customHeader: string;
+  customHeaderDescription?: string;
 }
 
-export default function ApplicationLayout({ children, customHeader }: Props) {
+export default function ApplicationLayout({
+  children,
+  customHeader,
+  customHeaderDescription,
+}: Props) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { address } = useAccount();
@@ -289,6 +287,9 @@ export default function ApplicationLayout({ children, customHeader }: Props) {
               <h1 className="text-3xl font-black tracking-tight text-white">
                 {customHeader}
               </h1>
+              <h5 className="mt-3 text-md font-medium text-gray-400 max-w-xl">
+                {customHeaderDescription}
+              </h5>
             </div>
           </header>
         </div>

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Head from "next/head";
 import {
   BanknotesIcon,
@@ -7,6 +8,15 @@ import {
 } from "@heroicons/react/24/outline";
 import { useAccount } from "wagmi";
 import ApplicationLayout from "@/components/Utilities/ApplicationLayout";
+
+import {
+  GeolocateControl,
+  Map,
+  Marker,
+  NavigationControl,
+  useMap,
+} from "react-map-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 const stats = [
   {
@@ -61,12 +71,51 @@ const items = [
   },
 ];
 
-function classNames(...classes: string[]) {
+function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
 export default function Home() {
-  const { address } = useAccount();
+  const { address: walletAddress } = useAccount();
+  const [location, setLocation] = useState([]);
+  const [address, setAddress] = useState(null);
+
+  function handleLocationClick() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(success, error);
+    } else {
+      console.log("Geolocation not supported");
+    }
+  }
+
+  function success(position) {
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+    setLocation([latitude, longitude]);
+    console.log(`Latitude: ${latitude}, Longitude: ${longitude}`);
+
+    // Make API call to OpenWeatherMap
+    fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_API_KEY}`
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        // setAddress((data) => {
+        //   data.
+        // });
+
+        console.log(data);
+        var addressTemp = data.features.filter((item) =>
+          item.place_type.includes("address")
+        )[0];
+        setAddress(addressTemp.place_name);
+      })
+      .catch((error) => console.log(error));
+  }
+
+  function error() {
+    console.log("Unable to retrieve your location");
+  }
 
   return (
     <>
@@ -121,11 +170,18 @@ export default function Home() {
             Blockchain."
         />
         <meta property="twitter:image" content="/meta-image.jpg" />
+        <style>
+          {`
+          .map-container {
+            height: 500px;
+            }
+          `}
+        </style>
       </Head>
 
       <ApplicationLayout customHeader="Your Dashboard">
         {/* Earnings Stats Start */}
-        <div>
+        <div className="rounded-md bg-white px-5 py-6 shadow sm:px-6">
           <dl className="mx-auto grid grid-cols-1 gap-px bg-zinc-900/5 sm:grid-cols-2 lg:grid-cols-4">
             {stats.map((stat) => (
               <div
@@ -153,9 +209,56 @@ export default function Home() {
           </dl>
         </div>
         {/* Earnings Stats End */}
-
+        {/* Map Start */}
+        <div className="mt-8 rounded-md bg-white px-5 py-6 shadow sm:px-6">
+          <div className="font-semibold text-2xl text-gray-900">
+            EV Charging Stations Near Your Location
+          </div>
+          <div>
+            {!location ? (
+              <button onClick={handleLocationClick}>Get Location</button>
+            ) : null}
+            {location ? <p>Loading weather data...</p> : null}
+            {location ? (
+              <div>
+                <p>Location: {address}</p>
+              </div>
+            ) : null}
+          </div>
+          <div className="col-span-2 overflow-hidden rounded-md">
+            {location && (
+              <Map
+                mapLib={import("mapbox-gl")}
+                mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_API_KEY}
+                attributionControl={false}
+                initialViewState={{
+                  longitude: location[1],
+                  latitude: location[0],
+                  zoom: 10,
+                }}
+                style={{ height: 500 }}
+                // mapStyle="mapbox://styles/mapbox/navigation-day-v1"
+                mapStyle="mapbox://styles/mapbox/streets-v9"
+                className="relative map-container"
+              >
+                <GeolocateControl />
+                <NavigationControl />
+                {/* {showMarker && (
+                  <Marker
+                    longitude={center[0]}
+                    latitude={center[1]}
+                    anchor="bottom"
+                    draggable={true}
+                    onClose={() => setShowPopup(false)}
+                  />
+                )} */}
+              </Map>
+            )}
+          </div>
+        </div>
+        {/* Map End */}
         {/* Menu Start */}
-        <div className="px-5 lg:px-8">
+        {/* <div className="px-5 lg:px-8">
           <h2 className="pt-8 text-base font-semibold leading-6 text-zinc-900 border-t border-zinc-200">
             {address && (
               <>
@@ -201,7 +304,7 @@ export default function Home() {
               </li>
             ))}
           </ul>
-        </div>
+        </div> */}
         {/* Menu End */}
       </ApplicationLayout>
     </>
