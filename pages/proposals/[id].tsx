@@ -1,24 +1,17 @@
 import Head from "next/head";
 import ApplicationLayout from "@/components/Utilities/ApplicationLayout";
 import { useState, useEffect } from "react";
-import { ReactMarkdown } from "react-markdown/lib/react-markdown";
+import ReactMarkdown from "react-markdown";
 import {
   QueueButton,
   ExecuteButton,
 } from "@/components/Utilities/ProposalMethods";
-import {
-  useAccount,
-  useContractReads,
-  useContractRead,
-  useContractWrite,
-} from "wagmi";
-import {
-  GOVERNOR_CONTRACT_ABI,
-  GOVERNOR_CONTRACT_ADDRESS,
-} from "@/utilities/contractDetails";
+import { useAccount, useContractRead, useContractWrite } from "wagmi";
+import DEPLOYED_CONTRACTS from "@/utilities/contractDetails";
 import { useRouter } from "next/router";
-import { numberToHex } from "viem";
 import axios from "axios";
+import Proposals from "../governance";
+import { encodeFunctionData, toHex, keccak256 } from "viem";
 
 export default function Proposal() {
   const { address } = useAccount();
@@ -30,58 +23,102 @@ export default function Proposal() {
   const id = router.query.id;
 
   const { data: voted } = useContractRead({
-    address: GOVERNOR_CONTRACT_ADDRESS,
-    abi: GOVERNOR_CONTRACT_ABI.abi,
+    address: DEPLOYED_CONTRACTS.GOVERNOR.address,
+    abi: DEPLOYED_CONTRACTS.GOVERNOR.abi,
     functionName: "hasVoted",
     args: [id, address],
   });
 
   const { data, isLoading, isSuccess, write } = useContractWrite({
-    address: GOVERNOR_CONTRACT_ADDRESS,
-    abi: GOVERNOR_CONTRACT_ABI.abi,
+    address: DEPLOYED_CONTRACTS.GOVERNOR.address,
+    abi: DEPLOYED_CONTRACTS.GOVERNOR.abi,
     functionName: "castVote",
   });
 
   const { data: stateData, isSuccess: isStateSuccess } = useContractRead({
-    address: GOVERNOR_CONTRACT_ADDRESS,
-    abi: GOVERNOR_CONTRACT_ABI.abi,
+    address: DEPLOYED_CONTRACTS.GOVERNOR.address,
+    abi: DEPLOYED_CONTRACTS.GOVERNOR.abi,
     functionName: "state",
     args: [id],
   });
 
+  // const encodedCallData = encodeFunctionData({
+  //   abi: TCR_CONTRACT_ABI.abi,
+  //   functionName: 'createEntry',
+  //   args: ['598-766', 'FabianNet', 'Goa'],
+  // });
+
+  // console.log(encodedCallData);
+
+  // if (
+  //   encodedCallData ==
+  //   '0xb8ba58a5000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e000000000000000000000000000000000000000000000000000000000000000073539382d37363600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000946616269616e4e657400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003476f610000000000000000000000000000000000000000000000000000000000'
+  // ) {
+  //   console.log('matches');
+  // } else {
+  //   console.log('does not match');
+  // }
+
+  // const {
+  //   data: hashData,
+  //   isLoading: isHashLoading,
+  //   isSuccess: isHashSuccess,
+  //   isError: isHashError,
+  // } = useContractRead({
+  //   address: GOVERNOR_CONTRACT_ADDRESS,
+  //   abi: GOVERNOR_CONTRACT_ABI.abi,
+  //   functionName: 'hashProposal',
+  //   args: [
+  //     [TCR_CONTRACT_ADDRESS],
+  //     [0],
+  //     [encodedCallData],
+  //     keccak256(
+  //       toHex(
+  //         '{"name":"FabianNet","description":"Proposal for FabianNet","mnc":"766","mcc":"598","region":"Goa","plmn":"598-766","title":"New PLMN Registry For FabianNet"}',
+  //       ),
+  //     ),
+  //   ],
+  // });
+
+  // console.log(hashData);
+
   useEffect(() => {
-    const fetchProposal = async () => {
-      // const hexData = numberToHex(id)
-      const proposal = await axios.get(
-        `/api/proposalRetrival/details?proposalId=${id}`
-      );
-      // console.log(proposal.data.proposal)
-      setProposalData(proposal.data.proposal);
-      // console.log(proposal.data.votes)
-      setTotalVoteCount(proposal.data.votes.length);
-      let votes = proposal.data.votes;
-      let forVotes = [];
-      let againstVotes = [];
-      let abstainVotes = [];
-      votes.forEach((vote) => {
-        let voteIndex = vote.args[2];
-        if (voteIndex == 0) {
-          againstVotes.push(vote.args[0]);
-        } else if (voteIndex == 1) {
-          forVotes.push(vote.args[0]);
-        } else {
-          abstainVotes.push(vote.args[0]);
-        }
-      });
-      setVotes({
-        forVotes,
-        againstVotes,
-        abstainVotes,
-      });
-      console.log({ forVotes, againstVotes, abstainVotes });
-    };
-    fetchProposal().then(() => setLoading(false));
-  }, [id]);
+    if (router.isReady) {
+      console.log("Router query: ", router.query.id);
+      axios
+        .get(`/api/proposalRetrival/details?proposalId=${router.query.id}`)
+        .then(function (proposal) {
+          console.log(proposal);
+          setProposalData(proposal.data.proposal);
+          // console.log(proposal.data.votes)
+          setTotalVoteCount(proposal.data.votes.length);
+          let votes = proposal.data.votes;
+          let forVotes: any = [];
+          let againstVotes: any = [];
+          let abstainVotes: any = [];
+          votes.forEach((vote) => {
+            let voteIndex = vote.args[2];
+            if (voteIndex == 0) {
+              againstVotes.push(vote.args[0]);
+            } else if (voteIndex == 1) {
+              forVotes.push(vote.args[0]);
+            } else {
+              abstainVotes.push(vote.args[0]);
+            }
+          });
+          setVotes({
+            forVotes,
+            againstVotes,
+            abstainVotes,
+          });
+          setLoading(false);
+          // console.log({ forVotes, againstVotes, abstainVotes });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  }, [router.isReady]);
 
   if (loading) {
     return <ApplicationLayout customHeader="Loading..."></ApplicationLayout>;
@@ -91,7 +128,7 @@ export default function Proposal() {
     <>
       <Head>
         <title>
-          Dashboard - Netspan | Democratizing EV Technology using the Blockchain
+          Dashboard - Electra | Democratizing EV Technology using the Blockchain
         </title>
         <meta
           name="title"
@@ -201,9 +238,9 @@ export default function Proposal() {
               </div>
             </div>
             {/* Addresses End */}
-            {/* <div className="mt-5 pt-5 border-t border-gray-200 font-black text-gray-600 text-md text-center">
+            <div className="mt-5 pt-5 border-t border-gray-200 font-black text-gray-600 text-md text-center">
               View All
-            </div> */}
+            </div>
           </div>
 
           <div className="rounded-md bg-white shadow py-6">
@@ -265,9 +302,9 @@ export default function Proposal() {
               </div>
             </div>
             {/* Addresses End */}
-            {/* <div className="mt-5 pt-5 border-t border-gray-200 font-black text-gray-600 text-md text-center">
+            <div className="mt-5 pt-5 border-t border-gray-200 font-black text-gray-600 text-md text-center">
               View All
-            </div> */}
+            </div>
           </div>
         </div>
 
@@ -329,11 +366,17 @@ export default function Proposal() {
         {/* Current: Queue */}
         {stateData === 5 && <ExecuteButton proposalData={proposalData} />}
 
-        <div className="rounded-md bg-white shadow px-5 sm:px-6 py-6">
-          <div className="font-black text-xl">Details</div>
-          <ReactMarkdown className="mt-5">
-            {JSON.parse(proposalData.args[8]).description}
-          </ReactMarkdown>
+        <div className="rounded-md bg-white shadow py-6">
+          {/* {!isLoading && (
+            <ReactMarkdown children={JSON.parse(proposalData.args[8])} />
+          )} */}
+          <div className="rounded-md bg-white shadow px-5 sm:px-6 py-6">
+            {
+              <ReactMarkdown
+                children={JSON.parse(proposalData.args[8]).description}
+              />
+            }
+          </div>
         </div>
       </ApplicationLayout>
     </>

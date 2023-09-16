@@ -3,13 +3,10 @@ import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 import { useAccount, useContractRead, useContractWrite } from "wagmi";
-import {
-  NETSPAN_TOKEN_ABI,
-  NETSPAN_TOKEN_ADDRESS,
-} from "@/utilities/contractDetails";
+import DEPLOYED_CONTRACTS from "@/utilities/contractDetails";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import ApplicationLayout from "@/components/Utilities/ApplicationLayout";
-
+import { formatEther } from "viem";
 import { GeolocateControl, Map, Marker, NavigationControl } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -68,17 +65,17 @@ export default function Home() {
   const [PopUpData, setPopUpData] = useState({});
   const [walletAddress, setWalletAddress] = useState(address);
   const { data, isLoading, isSuccess, write } = useContractWrite({
-    address: NETSPAN_TOKEN_ADDRESS,
-    abi: NETSPAN_TOKEN_ABI.abi,
+    address: DEPLOYED_CONTRACTS.ELECTRA_TOKEN.address,
+    abi: DEPLOYED_CONTRACTS.ELECTRA_TOKEN.abi,
     functionName: "delegate",
     args: [walletAddress],
   });
 
   const { data: VotingTokens } = useContractRead({
-    address: NETSPAN_TOKEN_ADDRESS,
-    abi: NETSPAN_TOKEN_ABI.abi,
+    address: DEPLOYED_CONTRACTS.ELECTRA_TOKEN.address,
+    abi: DEPLOYED_CONTRACTS.ELECTRA_TOKEN.abi,
     functionName: "getVotes",
-    args: ["0xd69a4dd0dfb261a8EF37F45925491C077EF1dBFb"],
+    args: [address],
   });
 
   useEffect(() => {
@@ -191,7 +188,7 @@ export default function Home() {
               Total Votes you posses
             </div>
             <div className="mt-5 font-black text-5xl text-gray-900">
-              {VotingTokens ? VotingTokens.toString() : "0"}{" "}
+              {VotingTokens ? formatEther(VotingTokens).toString() : "0"}{" "}
               <span className="text-base text-gray-500 font-medium">votes</span>
             </div>
           </div>
@@ -217,7 +214,7 @@ export default function Home() {
                   id="address"
                   className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
                   placeholder="0x00000000000000000000000000000000"
-                  defaultValue={addressOnMap}
+                  defaultValue={walletAddress}
                   onChange={(e) => setWalletAddress(e.target.value)}
                   aria-describedby="address"
                 />

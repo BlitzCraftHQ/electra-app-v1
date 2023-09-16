@@ -1,18 +1,14 @@
 import { useEffect, useState } from "react";
 import Head from "next/head";
 import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
-import { useContractWrite } from "wagmi";
-import {
-  GOVERNOR_CONTRACT_ABI,
-  GOVERNOR_CONTRACT_ADDRESS,
-  TCR_CONTRACT_ADDRESS,
-  TCR_CONTRACT_ABI,
-} from "@/utilities/contractDetails";
+import { useAccount, useContractWrite } from "wagmi";
+import DEPLOYED_CONTRACTS from "@/utilities/contractDetails";
 import { encodeFunctionData } from "viem";
 import ApplicationLayout from "@/components/Utilities/ApplicationLayout";
 import useInput from "@/components/Utilities/useInput";
 
 export default function RegisterCharger() {
+  const { address: currentWalletAddress } = useAccount();
   const [Loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showFailed, setShowFailed] = useState(false);
@@ -26,6 +22,7 @@ export default function RegisterCharger() {
     address: "",
     latitude: center[1],
     longitude: center[0],
+    chargingFee: 1000000,
     chargerCapacity: "",
   });
 
@@ -52,33 +49,16 @@ export default function RegisterCharger() {
     }));
   }, [center]);
 
-  // const encodedCallData = encodeFunctionData({
-  //   abi: TCR_CONTRACT_ABI.abi,
-  //   functionName: "createEntry",
-  //   args: [
-  //     inputs.firstName,
-  //     inputs.lastName,
-  //     inputs.address,
-  //     // inputs.chargerCapacity,
-  //     // center[1],
-  //     // center[0],
-  //   ],
-  // });
-
-  // const { data, isLoading, isSuccess, write } = useContractWrite({
-  //   address: GOVERNOR_CONTRACT_ADDRESS,
-  //   abi: GOVERNOR_CONTRACT_ABI.abi,
-  //   functionName: "propose",
-  //   args: [
-  //     [TCR_CONTRACT_ADDRESS],
-  //     [0],
-  //     [encodedCallData],
-  //     JSON.stringify({
-  //       ...inputs,
-  //       title: `New Charging Station At ${inputs.address}`,
-  //     }),
-  //   ],
-  // });
+  const {
+    data,
+    isLoading,
+    isSuccess,
+    write: propose,
+  } = useContractWrite({
+    address: DEPLOYED_CONTRACTS.GOVERNOR.address,
+    abi: DEPLOYED_CONTRACTS.GOVERNOR.abi,
+    functionName: "propose",
+  });
 
   // Submit form
   const handleSubmit = async (e) => {
@@ -87,14 +67,37 @@ export default function RegisterCharger() {
     setShowSuccess(false);
     setShowFailed(false);
 
-    // write();
-
-    const stringifiedJSON = JSON.stringify({
+    let metadata = JSON.stringify({
       ...inputs,
-      title: `New Charging Station At ${inputs.address}`,
+      owner: currentWalletAddress,
+      title: `Proposal: New Charging Station At ${inputs.address}`,
+      description: `A new charging station has been added to the Electra Registry at ${inputs.address}. 
+        **Owner:** ${inputs.firstName} ${inputs.lastName}
+        **Charging Fee:** ${inputs.chargingFee} wei
+        **Charger Capacity:** ${inputs.chargerCapacity} kW
+        **Location:** ${inputs.address}
+        **Latitude:** ${inputs.latitude}
+        **Longitude:** ${inputs.longitude} 
+        Please vote on this proposal to add this charging station to the Electra Registry.`,
     });
 
-    console.log(stringifiedJSON);
+    const encodedCallData = encodeFunctionData({
+      abi: DEPLOYED_CONTRACTS.STATION_REGISTRY.abi,
+      functionName: "addChargingStation",
+      args: [currentWalletAddress, metadata, inputs.chargingFee],
+    });
+
+    console.log("Metadata: ", metadata);
+    console.log("Encoded Call Data: ", encodedCallData);
+
+    propose({
+      args: [
+        [DEPLOYED_CONTRACTS.STATION_REGISTRY.address], // targets
+        [0], // values
+        [encodedCallData], // addChargingStation
+        metadata, // description
+      ],
+    });
 
     if (isSuccess) {
       setLoading(false);
@@ -178,7 +181,7 @@ export default function RegisterCharger() {
             className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-8"
             onSubmit={handleSubmit}
           >
-            <div className="col-span-3 grid grid-cols-1: md:grid-cols-2 gap-x-5">
+            <div className="col-span-3 grid grid-cols-1: md:grid-cols-3 gap-x-5">
               <div className="rounded-md px-3 pb-1.5 pt-2.5 shadow-sm ring-1 ring-inset ring-zinc-300 focus-within:ring-2 focus-within:ring-primary-400">
                 <label
                   htmlFor="firstName"
@@ -214,6 +217,23 @@ export default function RegisterCharger() {
                   placeholder="Hendricks"
                 />
               </div>
+              <div className="rounded-md px-3 pb-1.5 pt-2.5 shadow-sm ring-1 ring-inset ring-zinc-300 focus-within:ring-2 focus-within:ring-primary-400">
+                <label
+                  htmlFor="Charging Fee"
+                  className="block text-xs font-medium text-zinc-900"
+                >
+                  Charging Fee
+                </label>
+                <input
+                  type="text"
+                  name="chargingFee"
+                  id="chargingFee"
+                  onChange={handleInput}
+                  value={inputs.chargingFee}
+                  className="block w-full border-0 p-0 text-zinc-900 placeholder:text-zinc-400 focus:ring-0 sm:text-sm sm:leading-6"
+                  placeholder="1000000 (in wei)"
+                />
+              </div>
             </div>
 
             <div className="col-span-3 rounded-md px-3 pb-1.5 pt-2.5 shadow-sm ring-1 ring-inset ring-zinc-300 focus-within:ring-2 focus-within:ring-primary-400">
@@ -221,7 +241,7 @@ export default function RegisterCharger() {
                 htmlFor="address"
                 className="block text-xs font-medium text-zinc-900"
               >
-                Address
+                Location
               </label>
               <input
                 {...address}
@@ -255,15 +275,15 @@ export default function RegisterCharger() {
 
             <div className="rounded-md px-3 pb-1.5 pt-2.5 shadow-sm ring-1 ring-inset ring-zinc-300 focus-within:ring-2 focus-within:ring-primary-400">
               <label
-                htmlFor="websiteURL"
+                htmlFor="longitude"
                 className="block text-xs font-medium text-zinc-900"
               >
                 Longitude
               </label>
               <input
                 type="text"
-                name="websiteURL"
-                id="websiteURL"
+                name="longitude"
+                id="longitude"
                 onChange={handleInput}
                 value={center[0]}
                 className="block w-full border-0 p-0 text-zinc-900 placeholder:text-zinc-400 focus:ring-0 sm:text-sm sm:leading-6"
@@ -274,15 +294,15 @@ export default function RegisterCharger() {
 
             <div className="rounded-md px-3 pb-1.5 pt-2.5 shadow-sm ring-1 ring-inset ring-zinc-300 focus-within:ring-2 focus-within:ring-primary-400">
               <label
-                htmlFor="websiteURL"
+                htmlFor="latitude"
                 className="block text-xs font-medium text-zinc-900"
               >
                 Latitude
               </label>
               <input
                 type="text"
-                name="websiteURL"
-                id="websiteURL"
+                name="latitude"
+                id="latitude"
                 onChange={handleInput}
                 value={center[1]}
                 disabled={true}
@@ -362,7 +382,7 @@ export default function RegisterCharger() {
                   "Registering Charging Station..."
                 ) : (
                   <span className="flex justify-center gap-x-2">
-                    Register <span aria-hidden="true">→</span>
+                    Propose Registration <span aria-hidden="true">→</span>
                   </span>
                 )}
               </button>

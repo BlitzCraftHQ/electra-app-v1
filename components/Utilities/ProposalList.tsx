@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  GOVERNOR_CONTRACT_ABI,
-  GOVERNOR_CONTRACT_ADDRESS,
-} from "@/utilities/contractDetails";
+import DEPLOYED_CONTRACTS from "@/utilities/contractDetails";
 import {
   CheckBadgeIcon,
   XCircleIcon,
@@ -30,8 +27,8 @@ export default function ProposalList({ proposal, proposalId }: any) {
     isError: isErrorState,
     isLoading: isLoadingState,
   }: { data: any; isError: boolean; isLoading: boolean } = useContractRead({
-    address: GOVERNOR_CONTRACT_ADDRESS,
-    abi: GOVERNOR_CONTRACT_ABI.abi,
+    address: DEPLOYED_CONTRACTS.GOVERNOR.address,
+    abi: DEPLOYED_CONTRACTS.GOVERNOR.abi,
     functionName: "state",
     args: [proposalId],
   });
@@ -41,8 +38,8 @@ export default function ProposalList({ proposal, proposalId }: any) {
     isError: isErrorVote,
     isLoading: isLoadingVote,
   }: { data: any; isError: boolean; isLoading: boolean } = useContractRead({
-    address: GOVERNOR_CONTRACT_ADDRESS,
-    abi: GOVERNOR_CONTRACT_ABI.abi,
+    address: DEPLOYED_CONTRACTS.GOVERNOR.address,
+    abi: DEPLOYED_CONTRACTS.GOVERNOR.abi,
     functionName: "proposalVotes",
     args: [proposalId],
   });
@@ -63,7 +60,12 @@ export default function ProposalList({ proposal, proposalId }: any) {
     try {
       return setRenderMarkdown(JSON.parse(proposal.description).title);
     } catch {
-      return setRenderMarkdown(proposal.description);
+      try {
+        return setRenderMarkdown(proposal.description);
+      } catch {
+        console.log("error md");
+        return setRenderMarkdown(proposal.description.description);
+      }
     }
   }, [proposal.description, renderMarkdown]);
 
@@ -87,7 +89,7 @@ export default function ProposalList({ proposal, proposalId }: any) {
                 {/* {JSON.parse(proposal.description).title} */}
                 {renderMarkdown}
                 {/* {JSON.parse(proposal.description).title &&
-                  JSON.parse(proposal.description).title} */}
+                JSON.parse(proposal.description).title} */}
               </p>
               <div className="mt-3 flex items-center gap-x-5">
                 <div className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-zinc-900 ring-1 ring-inset ring-zinc-200 capitalize">
@@ -96,7 +98,8 @@ export default function ProposalList({ proposal, proposalId }: any) {
                       statusList[stateData] === "Active" ||
                       statusList[stateData] == "Queued"
                         ? "fill-yellow-500"
-                        : statusList[stateData] === "Succeeded"
+                        : statusList[stateData] === "Succeeded" ||
+                          statusList[stateData] == "Executed"
                         ? "fill-green-500"
                         : statusList[stateData] === "Pending"
                         ? "fill-gray-500"
@@ -120,73 +123,83 @@ export default function ProposalList({ proposal, proposalId }: any) {
               </div>
             </div>
           </div>
-          <div className="col-span-2 hidden shrink-0 sm:flex sm:flex-col sm:items-end">
-            {statusList[stateData] === "Active" ? (
-              <>
-                <div className="w-full">
-                  <p className="mt-1 text-xs leading-5 text-zinc-500 flex justify-between">
-                    <span>
-                      {parseInt(votesData[1])} out of{" "}
-                      {parseInt(votesData[1]) + parseInt(votesData[0])}
-                    </span>
-                    <span className="font-medium text-zinc-700">For</span>
-                  </p>
-                  <div className="w-full bg-zinc-200 rounded-full h-1">
-                    <div
-                      className="bg-green-600 h-1 rounded-full"
-                      style={{
-                        width: `${cal(votesData[1])}%`,
-                      }}
-                    ></div>
+          {isLoadingVote ? (
+            <div>Loading</div>
+          ) : (
+            <div className="col-span-2 hidden shrink-0 sm:flex sm:flex-col sm:items-end">
+              {statusList[stateData] === "Active" ? (
+                <>
+                  <div className="w-full">
+                    <p className="mt-1 text-xs leading-5 text-zinc-500 flex justify-between">
+                      <span>
+                        {parseInt(votesData[1])} out of{" "}
+                        {parseInt(votesData[1]) + parseInt(votesData[0])}
+                      </span>
+                      <span className="font-medium text-zinc-700">For</span>
+                    </p>
+                    <div className="w-full bg-zinc-200 rounded-full h-1">
+                      <div
+                        className="bg-green-600 h-1 rounded-full"
+                        style={{
+                          width: `${cal(votesData[1])}%`,
+                        }}
+                      ></div>
+                    </div>
                   </div>
-                </div>
-                <div className="mt-3 w-full">
-                  <p className="mt-1 text-xs leading-5 text-zinc-500 flex justify-between">
-                    <span>
-                      {parseInt(votesData[0])} out of{" "}
-                      {parseInt(votesData[1]) + parseInt(votesData[0])}
-                    </span>
-                    <span className="font-medium text-zinc-700">Against</span>
-                  </p>
-                  <div className="w-full bg-zinc-200 rounded-full h-1">
-                    <div
-                      className="bg-red-600 h-1 rounded-full"
-                      style={{
-                        width: `${cal(votesData[0])}%`,
-                      }}
-                    ></div>
+                  <div className="mt-3 w-full">
+                    <p className="mt-1 text-xs leading-5 text-zinc-500 flex justify-between">
+                      <span>
+                        {parseInt(votesData[0])} out of{" "}
+                        {parseInt(votesData[1]) + parseInt(votesData[0])}
+                      </span>
+                      <span className="font-medium text-zinc-700">Against</span>
+                    </p>
+                    <div className="w-full bg-zinc-200 rounded-full h-1">
+                      <div
+                        className="bg-red-600 h-1 rounded-full"
+                        style={{
+                          width: `${cal(votesData[0])}%`,
+                        }}
+                      ></div>
+                    </div>
                   </div>
+                </>
+              ) : statusList[stateData] === "Defeated" ||
+                statusList[stateData] == "Cancelled" ||
+                statusList[stateData] == "Expired" ? (
+                <div className="flex items-center gap-x-1">
+                  <span className="text-sm font-medium">
+                    {statusList[stateData]}
+                  </span>
+                  <XCircleIcon
+                    className="text-red-600 group-hover:text-white h-6 w-6 shrink-0"
+                    aria-hidden="true"
+                  />
                 </div>
-              </>
-            ) : statusList[stateData] === "Defeated" ||
-              statusList[stateData] == "Cancelled" ? (
-              <div className="flex items-center gap-x-1">
-                <span className="text-sm font-medium">
-                  {statusList[stateData]}
-                </span>
-                <XCircleIcon
-                  className="text-red-600 group-hover:text-white h-6 w-6 shrink-0"
-                  aria-hidden="true"
-                />
-              </div>
-            ) : statusList[stateData] == "Pending" ? (
-              <div className="flex items-center gap-x-1">
-                <span className="text-sm font-medium">Pending</span>
-                <PauseCircleIcon
-                  className="text-green-600 group-hover:text-white h-6 w-6 shrink-0"
-                  aria-hidden="true"
-                />
-              </div>
-            ) : (
-              <div className="flex items-center gap-x-1">
-                <span className="text-sm font-medium">Executed</span>
-                <CheckBadgeIcon
-                  className="text-green-600 group-hover:text-white h-6 w-6 shrink-0"
-                  aria-hidden="true"
-                />
-              </div>
-            )}
-          </div>
+              ) : statusList[stateData] == "Pending" ||
+                statusList[stateData] == "Queued" ? (
+                <div className="flex items-center gap-x-1">
+                  <span className="text-sm font-medium">
+                    {statusList[stateData]}
+                  </span>
+                  <PauseCircleIcon
+                    className="text-green-600 group-hover:text-white h-6 w-6 shrink-0"
+                    aria-hidden="true"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center gap-x-1">
+                  <span className="text-sm font-medium">
+                    {statusList[stateData]}
+                  </span>
+                  <CheckBadgeIcon
+                    className="text-green-600 group-hover:text-white h-6 w-6 shrink-0"
+                    aria-hidden="true"
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </Link>
       </li>
     </div>

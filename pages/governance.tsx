@@ -6,6 +6,7 @@ import ProposalList from "@/components/Utilities/ProposalList";
 import { gql } from "@apollo/client";
 import { client } from "@/utilities/graphql";
 import { useEffect, useState } from "react";
+import axios from "axios";
 
 const proposals = [
   {
@@ -74,41 +75,27 @@ export default function Governance() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const result = await client.query({
-          query: gql`
-            query ProposalEvents {
-              tcrRegistries(
-                query: { event_in: ["ProposalCreated"], chainId_in: [80001] }
-              ) {
-                _id
-                args
-              }
-            }
-          `,
-        });
-        if (result.data.tcrRegistries) {
+        const result = await axios
+          .get("/api/proposals")
+          .then((res) => {
+            return res.data;
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+        console.log("Result:", result);
+        if (result.proposals) {
           let proposalsMod: any[] = [];
-          result.data.tcrRegistries.forEach(
+          result.proposals.forEach(
             (element: { [x: string]: any }, index: any) => {
-              let num = element["args"][0]
-                .replace("{", "")
-                .replace("[", "")
-                .replace("]", "")
-                .replace("}", "")
-                .replace("_hex", "")
-                .replace("{_isBigNumber true}", "")
-                .replace(" ", "");
+              let bigNumb = BigInt(element["args"][0]._hex);
 
-              var bigNumb = BigInt(num);
-
-              //get remaining time
+              // Get remaining time
               let createdTime = new Date(
                 parseInt(element["_id"].substring(0, 8), 16) * 1000
               ).getTime();
               console.log("created time for ", index, " is: ", createdTime);
-
               let endTime = Math.floor(+createdTime / 1000) + 3 * 24 * 60 * 60;
-
               console.log("end time for ", index, " is: ", endTime);
 
               let currTime = Date.now();
@@ -116,7 +103,7 @@ export default function Governance() {
 
               proposalsMod.push({
                 id: bigNumb.toString(10),
-                description: element["args"][8],
+                description: JSON.parse(element["args"][8]),
                 remainingTime: remTime,
               });
             }
