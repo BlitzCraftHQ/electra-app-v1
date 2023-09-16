@@ -7,6 +7,7 @@ import {
   PauseCircleIcon,
 } from "@heroicons/react/20/solid";
 import Link from "next/link";
+import { ReactMarkdown } from "react-markdown/lib/react-markdown";
 import { useContractRead } from "wagmi";
 
 let statusList = [
@@ -83,7 +84,9 @@ export default function ProposalList({ proposal, proposalId }: any) {
             <div className="min-w-0 flex-auto">
               <p className="text-sm font-medium leading-6 text-zinc-900 line-clamp-2 text-ellipsis">
                 {/* {JSON.parse(proposal.description).title} */}
-                {renderMarkdown}
+                <ReactMarkdown>
+                  {proposal.description.description}
+                </ReactMarkdown>
                 {/* {JSON.parse(proposal.description).title &&
                 JSON.parse(proposal.description).title} */}
               </p>

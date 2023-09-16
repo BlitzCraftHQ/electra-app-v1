@@ -11,7 +11,7 @@ export default function Home() {
   const { data, isLoading, isSuccess, write } = useContractWrite({
     address: DEPLOYED_CONTRACTS.ELECTRA_TOKEN.address,
     abi: DEPLOYED_CONTRACTS.ELECTRA_TOKEN.abi,
-    functionName: "faucet",
+    functionName: "stake",
     args: [walletAddress, amount],
   });
 

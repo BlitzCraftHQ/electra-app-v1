@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
+import axios from "axios";
 import { useAccount, useContractRead, useContractWrite } from "wagmi";
 import DEPLOYED_CONTRACTS from "@/utilities/contractDetails";
 import { XMarkIcon } from "@heroicons/react/20/solid";
@@ -106,7 +107,20 @@ export default function Home() {
       })
       .then(() => {
         // Get markers
-        setMarkers(markersData);
+        axios
+          .get("/api/proposals")
+          .then((res) => {
+            console.log(
+              res.data.proposals.map((item) => JSON.parse(item["args"][8]))
+            );
+            setMarkers(
+              res.data.proposals.map((item) => JSON.parse(item["args"][8]))
+            );
+            console.log(markers);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
       })
       .catch((error) => console.log(error));
   }

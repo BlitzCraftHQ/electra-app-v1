@@ -195,6 +195,14 @@ export default function ApplicationLayout({
                                       )}
                                     </Menu.Item>
                                   ))}
+                                  <Menu.Item>
+                                    <span
+                                      onClick={() => disconnect()}
+                                      className="block px-4 py-2 text-sm text-gray-700 cursor-pointer"
+                                    >
+                                      Disconnect Wallet
+                                    </span>
+                                  </Menu.Item>
                                 </Menu.Items>
                               </Transition>
                             </Menu>
