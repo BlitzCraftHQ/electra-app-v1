@@ -36,8 +36,8 @@ const navigation = [
     icon: Battery100Icon,
   },
   {
-    name: "Wallet",
-    href: "/wallet",
+    name: "Top Up",
+    href: "/top-up",
     icon: CursorArrowRippleIcon,
   },
   {

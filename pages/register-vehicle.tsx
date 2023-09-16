@@ -2,12 +2,7 @@ import { useState } from "react";
 import Head from "next/head";
 import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import { useContractWrite } from "wagmi";
-import {
-  GOVERNOR_CONTRACT_ABI,
-  GOVERNOR_CONTRACT_ADDRESS,
-  TCR_CONTRACT_ADDRESS,
-  TCR_CONTRACT_ABI,
-} from "@/utilities/contractDetails";
+import DEPLOYED_CONTRACTS from "@/utilities/contractDetails";
 import { encodeFunctionData } from "viem";
 import ApplicationLayout from "@/components/Utilities/ApplicationLayout";
 
@@ -35,31 +30,15 @@ export default function RegisterVehicle() {
     }));
   };
 
-  const encodedCallData = encodeFunctionData({
-    abi: TCR_CONTRACT_ABI.abi,
-    functionName: "createEntry",
-    args: [
-      inputs.name,
-      inputs.make,
-      inputs.model,
-      // inputs.VINNumber,
-      // inputs.idealChargingWattage,
-    ],
-  });
-
-  const { data, isLoading, isSuccess, write } = useContractWrite({
-    address: GOVERNOR_CONTRACT_ADDRESS,
-    abi: GOVERNOR_CONTRACT_ABI.abi,
-    functionName: "propose",
-    args: [
-      [TCR_CONTRACT_ADDRESS],
-      [0],
-      [encodedCallData],
-      JSON.stringify({
-        ...inputs,
-        title: `New Electric Vehicle owned by ${inputs.name}`,
-      }),
-    ],
+  const {
+    data,
+    isLoading,
+    isSuccess,
+    write: registerVehicle,
+  } = useContractWrite({
+    address: DEPLOYED_CONTRACTS.VEHICLE_LEDGER.address,
+    abi: DEPLOYED_CONTRACTS.VEHICLE_LEDGER.abi,
+    functionName: "registerVehicle",
   });
 
   // Submit form
@@ -69,7 +48,27 @@ export default function RegisterVehicle() {
     setShowSuccess(false);
     setShowFailed(false);
 
-    write();
+    console.log("Inputs:", [
+      inputs.VINNumber,
+      JSON.stringify({
+        name: inputs.name,
+        make: inputs.make,
+        model: inputs.model,
+        idealChargingWattage: inputs.idealChargingWattage,
+      }),
+    ]);
+
+    registerVehicle({
+      args: [
+        inputs.VINNumber,
+        JSON.stringify({
+          name: inputs.name,
+          make: inputs.make,
+          model: inputs.model,
+          idealChargingWattage: inputs.idealChargingWattage,
+        }),
+      ],
+    });
 
     if (isSuccess) {
       setLoading(false);

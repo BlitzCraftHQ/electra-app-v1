@@ -57,15 +57,11 @@ export default function ProposalList({ proposal, proposalId }: any) {
   }
 
   useEffect(() => {
+    console.log("Proposal:", proposal.description);
     try {
       return setRenderMarkdown(JSON.parse(proposal.description).title);
     } catch {
-      try {
-        return setRenderMarkdown(proposal.description);
-      } catch {
-        console.log("error md");
-        return setRenderMarkdown(proposal.description.description);
-      }
+      return setRenderMarkdown(proposal.description.title);
     }
   }, [proposal.description, renderMarkdown]);
 
