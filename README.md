@@ -7,9 +7,18 @@
 5. **Decentralized Governance:** Electra's governance is decentralized and community-driven. The network is managed through a DAO (Decentralized Autonomous Organization), ensuring that important decisions are made collectively and transparently by token holders. This democratic approach ensures fairness and inclusivity in network operations.
 6. **Tokenized Registry:** Electra takes advantage of blockchain technology to tokenize the registry of chargers. Each charger is represented as a unique token on the blockchain, making it easy to manage and trade assets within the network securely.
 
+## Deployed Contracts
+- ElectraTokens: 0x5d597ca122C689aF8B48a750a95D8676CD001C94
+- Governor: 0xc378e7921C219Af49c4D2E2a59dcc930D1BB0351
+- StationRegistry: 0x01cc41A3E23b4906Ea9Dca417091f695398e2150
+- Timelock: 0xC2066E99BD6b4d6BbEef6dE67CaF8508d1Ad7445
+- VehicleLedger: 0xFf5C05d1232Ac8b3412C7cD92C0d12D360cb849E
+
 ### Blockchain Architecture
 
 ![sustainability-13-07962-g002.png](https://cdn.dorahacks.io/static/files/18a9ab87c712d5c4dad70b94ca18f18a.png)
+
+
 
 ### Smart Contract Process Flow
 
