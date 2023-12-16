@@ -7,7 +7,7 @@ import "./ElectraToken.sol";
 
 contract StationRegistry is Ownable { 
     using Counters for Counters.Counter;
-     ElectraToken public electraToken; // Address of the ElectraTokens contract
+    ElectraToken public electraToken; // Address of the ElectraTokens contract
 
 
     Counters.Counter public _stationIdCounter;

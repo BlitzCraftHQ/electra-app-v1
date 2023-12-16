@@ -46,6 +46,7 @@ contract VehicleLedger is Ownable{
 
     // Function to top up a vehicle's balance
     function topUpBalance(string memory _vin) public payable returns (uint256) {
+ 
 
         // Check if vehicle exists
         Vehicle storage vehicle = vehicleRegistry[_vin];

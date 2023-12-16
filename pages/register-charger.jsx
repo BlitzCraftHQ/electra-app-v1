@@ -378,7 +378,7 @@ export default function RegisterCharger() {
                 }`}
                 disabled={Loading}
               >
-                {Loading ? (
+                {isLoading ? (
                   "Registering Charging Station..."
                 ) : (
                   <span className="flex justify-center gap-x-2">
